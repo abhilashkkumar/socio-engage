@@ -1,0 +1,106 @@
+<!-- DO NOT REMOVE THE FOLLOWING COMMENT -->
+<!-- (c) Copyright 2014 Caroline Hill. All Rights Reserved. Contact Mlle Caroline Schnapp at mllegeorgesand@gmail.com -->
+<!-- DO NOT REMOVE THE ABOVE COMMENT -->
+
+{% if linklists.socio-engage-wrapping.links.size > 0 and linklists.socio-engage-wrapping.links.first.type == 'product_link' %}
+
+  <div id="is-a-socio-engage" style="clear: left; margin: 30px 0" class="clearfix rte">
+    <p>
+      <input type="hidden" name="attributes[socio-engage-wrapping]" value="" />
+      <input id="socio-engage-wrapping" type="checkbox" name="attributes[socio-engage-wrapping]" value="yes" {% if cart.attributes.gift-wrapping %} checked="checked"{% endif %} style="float: none" />
+      <label for="socio-engage-wrapping" style="display:inline; padding-left: 5px; float: none;">
+      For {{ linklists.socio-engage-wrapping.links.first.object.price | money }} 
+      please wrap the products in this order.
+      </label>
+    </p>
+    <p>
+      <label style="display:block" for="socio-engage-note">Gift message (free and optional):</label>
+      <textarea name="attributes[socio-engage-note]" id="socio-engage-note">{{ cart.attributes.socio-engage-note }}</textarea>
+    </p>
+  </div>
+
+{% assign id = linklists.socio-engage-wrapping.links.first.object.variants.first.id %}
+
+{% assign socio_engage_wraps_in_cart = 0 %}
+{% for item in cart.items %}
+  {% if item.id == id %}
+    {% assign socio_engage_wraps_in_cart = item.quantity %}
+  {% endif %}
+{% endfor %}
+
+<style>
+  #updates_{{ id }} { display: none; }
+</style>
+
+<script>
+
+Shopify.Cart = Shopify.Cart || {};
+
+Shopify.Cart.SocioEngageWrap = {};
+
+Shopify.Cart.SocioEngageWrap.set = function() {
+  jQuery.ajax({
+    type: 'POST',
+    url: '/cart/update.js', 
+    data: { updates: { {{ id }}: 1 }, attributes: { 'socio-engage-wrapping': true } }, 
+    dataType: 'json',
+    success: function() { location.href = '/cart'; }
+  });
+}
+
+Shopify.Cart.SocioEngageWrap.remove = function() {
+  jQuery.ajax({
+    type: 'POST',
+    url: '/cart/update.js', 
+    data: { updates: { {{ id }}: 0 }, attributes: { 'socio-engagegift-wrapping': '' } }, 
+    dataType: 'json',
+    success: function() { location.href = '/cart'; }
+  });
+}
+
+// If we have nothing but gift-wrap items in the cart.
+{% if cart.items.size == 1 and socio_engage_wraps_in_cart > 0 %}
+jQuery(function() {
+  Shopify.Cart.SocioEngageWrap.remove();
+});
+// If we have more than one socio-engage-wrap item in the cart.
+{% elsif socio_engage_wraps_in_cart > 1 %}
+jQuery(function() {
+  Shopify.Cart.SocioEngageWrap.set();
+});
+// If we have a socio-engage-wrap item in the cart but our socio-engage-wrapping cart attribute has not been set.
+{% elsif socio_engage_wraps_in_cart > 0 and cart.attributes.socio-engage-wrapping == blank  %}
+jQuery(function() {
+  Shopify.Cart.SocioEngageWrap.set();
+});
+// If we have no socio-engage-wrap item in the cart but our socio-engage-wrapping cart attribute has been set.
+{% elsif socio_engage_wraps_in_cart == 0 and cart.attributes.socio-engage-wrapping != blank  %}
+jQuery(function() {
+  Shopify.Cart.SocioEngageWrap.set();
+});
+{% endif %}
+
+// When the socio-engage-wrapping checkbox is checked or unchecked.
+jQuery(function() {
+  jQuery('[name="attributes\[socio-engage-wrapping\]"]').change(function() {
+    if (jQuery(this).is(':checked')) {
+      Shopify.Cart.SocioEngageWrap.set();    
+    }
+    else {
+      Shopify.Cart.SocioEngageWrap.remove();
+    }
+  });
+});
+ 
+</script>
+
+{% else %}
+
+<p style="clear: left; margin: 30px 0" class="rte">
+  You attempted to add a socio-engage-wrapping script to your shopping cart, but it won't work because you don't have 
+  a link list with handle <code>socio-engage-wrapping</code> which, in turn, contains a link
+  to your socio-engage-wrapping product. Please review the steps outlined
+</p>
+
+{% endif %}
+
